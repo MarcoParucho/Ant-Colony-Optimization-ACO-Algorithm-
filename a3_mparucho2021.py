@@ -5,6 +5,7 @@
     using colony optimization. Code based on algorithms provided in textbook.
 """
 import random
+import math
 
 #this matrix represents the distance between  entities
 d_matrix = [
@@ -62,4 +63,77 @@ def setup_ants(attraction_count, number_of_ants_factor):
         ant_colony.append(ant)
     return ant_colony
 
+#This function is to calculate the probability of visiting a city
+def visit_probabilistic_attraction(pheromone_trails, attraction_count, ant, alpha, beta):
+    current_attraction = ant.visited_attractions[-1]
+    all_attractions = list(range(attraction_count))
+    possible_attractions = list(set(all_attractions) - set(ant.visited_attractions))
 
+    possible_indexes = []
+    possible_probabilities = []
+    total_probabilities = 0
+
+    for attraction in possible_attractions:
+        possible_indexes.append(attraction)
+        pheromones_on_path = math.pow(pheromone_trails[current_attraction][attraction], beta)
+        heuristic_for_path = #need to defind this
+        probability = pheromones_on_path * heuristic_for_path
+        possible_probabilities.append(probability)
+        total_probabilities += probability
+
+    possible_probabilities = [probability / total_probabilities for probability in possible_probabilities]
+    return [possible_indexes, possible_probabilities]
+
+#this is the roulette function again, creates a slice with possible indexes and their size depends on the fitness 
+def roulette_wheel_selection(possible_indexes, possible_probabilities, possible_attractions_count):
+    slices = []
+    total = 0
+
+    for i in range(possible_attractions_count):
+        slice_range = [possible_indexes[i], total, total + possible_probabilities[i]]
+        slices.append(slice_range)
+        total += possible_probabilities[i]
+
+    spin = random.uniform(0, 1)
+    result = [slice_range for slice_range in slices if slice_range[1] < spin <= slice_range[2]]
+
+    return result
+
+#decreasing the evaporation intensity by and adding pheromones based on the current ant path
+def update_pheromones(evaporation_rate, pheromone_trails, attraction_count, ant_colony):
+    for x in range(attraction_count):
+        for y in range(attraction_count):
+            pheromone_trails[x][y] *= evaporation_rate
+
+    for ant in ant_colony:
+        distance_traveled = ant.get_distance_traveled()
+        for x in range(attraction_count):
+            for y in range(attraction_count):
+                pheromone_trails[x][y] += 1 / distance_traveled
+
+    return pheromone_trails
+
+#Creating a stopping criteria for the algorithm
+def get_best(ant_population, previous_best_ant):
+    best_ant = previous_best_ant
+    for ant in ant_population:
+        if ant.get_distance_traveled() < best_ant.get_distance_traveled():
+            best_ant = ant
+    return best_ant
+
+#this function ties everything together 
+def solve(total_iterations, evaporation_rate, number_of_ants_factor, attraction_count):
+    pheromone_trails = setup_pheromones(attraction_count)
+    best_ant = None
+
+    for i in range(total_iterations):
+        ant_colony = setup_ants(attraction_count, number_of_ants_factor)
+
+        for r in range(attraction_count - 1):
+            move_ants(ant_colony, pheromone_trails, attraction_count, alpha, beta)
+
+        update_pheromones(evaporation_rate, pheromone_trails, attraction_count, ant_colony)
+
+        best_ant = get_best(ant_colony, best_ant)
+
+    return best_ant
