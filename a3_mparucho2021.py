@@ -9,11 +9,25 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-#asking the user to input the number of cities themselves.
-N = int(input("Enter the number of cities: ")) 
+#Ask user for the number of cities
+while True:
+    try:
+        N = int(input("Enter the number of cities (minimum of 2): "))
+        if  2 <= N:
+            break
+        else:
+            print("Please enter two or more cities.")
+    except ValueError:
+        print("Please enter an integer.")
 
-#asking user for the seed randomness number
-seed = int(input("Enter the seed randomness number: "))
+#Ask user for the seed randomness number
+while True:
+    try:
+        seed = int(input("Enter the seed randomness number: "))
+        break
+    except ValueError:
+        print("Please enter an integer.")
+
 random.seed(seed)
 
 # Generating random points for the cities
