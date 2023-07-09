@@ -6,17 +6,20 @@
 """
 import random
 import math 
-import numpy as np # will need to use this library to be able to show a graph to an user.
+import numpy as np
 import matplotlib.pyplot as plt
 
-N = 25 #Number of cities, keep to 25 for default. You can play around with it to see others paths. Please stay between 1-100.
+#asking the user to input the number of cities themselves.
+N = int(input("Enter the number of cities: ")) 
 
-random.seed(40) #you can change the random seed to see different paths 
+#asking user for the seed randomness number
+seed = int(input("Enter the seed randomness number: "))
+random.seed(seed)
 
-#Generating random points for the cities
+# Generating random points for the cities
 cities = [(random.uniform(0, 200), random.uniform(0, 200)) for _ in range(N)]
 
-#Encapsulating the basic logic for an ant
+# Encapsulating the basic logic for an ant
 class Ant:
     def __init__(self, attraction_count):
         self.visited_attractions = []
@@ -31,7 +34,8 @@ class Ant:
     def visit_random_attraction(self):
         attraction = random.randint(0, self.attraction_count - 1)
         self.visited_attractions.append(attraction)
-    #this function deals with the probabilty of an ant visiting a city. Close to heuristics.
+
+    # This function deals with the probability of an ant visiting a city. Close to heuristics.
     def visit_probabilistic_attraction(self, pheromone_trails, alpha, beta):
         current_attraction = self.visited_attractions[-1]
         all_attractions = list(range(self.attraction_count))
@@ -68,7 +72,7 @@ class Ant:
             total_distance += distance
         return total_distance
 
-#this function setes up the colony of ants. It appends them to a list to keep track of by reference.
+# This function sets up the colony of ants. It appends them to a list to keep track of by reference.
 def setup_ants(attraction_count, number_of_ants_factor):
     number_of_ants = round(attraction_count * number_of_ants_factor)
     ant_colony = []
@@ -79,12 +83,25 @@ def setup_ants(attraction_count, number_of_ants_factor):
         ant_colony.append(ant)
     return ant_colony
 
+def roulette_wheel_selection(possible_indexes, possible_probabilities):
+    slices = []
+    total = 0
+
+    for i in range(len(possible_indexes)):
+        slice_range = [possible_indexes[i], total, total + possible_probabilities[i]]
+        slices.append(slice_range)
+        total += possible_probabilities[i]
+
+    spin = random.uniform(0, 1)
+    result = [slice_range for slice_range in slices if slice_range[1] < spin <= slice_range[2]]
+
+    return result[0][0]
 
 def move_ants(ant_colony, pheromone_trails, alpha, beta):
     for ant in ant_colony:
         ant.visit_attractions(pheromone_trails, alpha, beta)
 
-#updating pheromone trails
+# Updating pheromone trails
 def update_pheromones(evaporation_rate, pheromone_trails, ant_colony):
     for x in range(N):
         for y in range(N):
@@ -100,7 +117,7 @@ def update_pheromones(evaporation_rate, pheromone_trails, ant_colony):
 
     return pheromone_trails
 
-#retraving the best ant from the population
+# Retrieving the best ant from the population
 def get_best(ant_population, previous_best_ant):
     best_ant = previous_best_ant
     for ant in ant_population:
@@ -108,7 +125,7 @@ def get_best(ant_population, previous_best_ant):
             best_ant = ant
     return best_ant
 
-#Putting everything together, Solving TSP with ACO
+# Putting everything together, solving TSP with ACO
 def solve(total_iterations, evaporation_rate, number_of_ants_factor, alpha, beta):
     pheromone_trails = np.ones((N, N))
     ant_colony = setup_ants(N, number_of_ants_factor)
@@ -129,7 +146,7 @@ def solve(total_iterations, evaporation_rate, number_of_ants_factor, alpha, beta
     return best_ant
 
 
-#settings...
+# Settings...
 total_iterations = 100
 evaporation_rate = 0.5
 number_of_ants_factor = 0.8
@@ -138,29 +155,29 @@ beta = 2
 
 best_ant = solve(total_iterations, evaporation_rate, number_of_ants_factor, alpha, beta)
 
-#Print the path of cities visited by the best ant
+# Print the path of cities visited by the best ant
 city_path = [cities[i] for i in best_ant.visited_attractions]
 city_names = [f"City {i + 1}: {city}" for i, city in zip(best_ant.visited_attractions, city_path)]
 print("Path of Cities:", ", ".join(city_names))
 
-#Plot the cities and the best path
+# Plot the cities and the best path
 x_coords = [city[0] for city in cities]
 y_coords = [city[1] for city in cities]
 
-#Plot the cities
+# Plot the cities
 plt.scatter(x_coords, y_coords, color='b', label='Cities')
 
-#Plot the best path
+# Plot the best path
 plt.plot(x_coords, y_coords, color='gray', linestyle='--')
 plt.plot(x_coords, y_coords, color='r', linestyle='-', linewidth=1.5)
 
-#Scatter plot for the best path (to make it visible)
+# Scatter plot for the best path (to make it visible)
 plt.scatter(x_coords, y_coords, color='r', label='Best Path')
 
-#Scatter plot for the starting city
+# Scatter plot for the starting city
 plt.scatter(x_coords[0], y_coords[0], color='g', label='Starting City')
 
-#displaying to the user
+# Displaying to the user
 plt.xlabel('X Coordinate')
 plt.ylabel('Y Coordinate')
 plt.title('Traveling Salesman Problem Solution by Marco Parucho')
